@@ -45,7 +45,7 @@ parser.add_argument('--gpus', default='0',
                     help='gpus used for training - e.g 0,1,3')
 parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
                     help='number of data loading workers (default: 8)')
-parser.add_argument('--epochs', default=2500, type=int, metavar='N',
+parser.add_argument('--epochs', default=250, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -65,6 +65,22 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
                     help='evaluate model FILE on validation set')
+
+
+
+#######################################################################################
+
+#DEFINE A DISCRIMINATOR NETWORK
+
+
+
+
+
+
+
+
+
+###########################################################################
 
 
 def main():
@@ -169,6 +185,8 @@ def main():
 
     ###################################################################################################################
     # define loss function (criterion) and optimizer
+
+    # we can find any code on github
     criterion = getattr(model, 'criterion', nn.CrossEntropyLoss)()
     criterion.type(args.type)
     model.type(args.type)
@@ -243,8 +261,78 @@ def main():
         #             title='Error@5', ylabel='error %')
         results.save()
 
-###################################################################################################################
 def forward(data_loader, model, criterion, epoch=0, training=True, optimizer=None):
+    if args.gpus and len(args.gpus) > 1:
+        model = torch.nn.DataParallel(model, args.gpus)
+    batch_time = AverageMeter()
+    data_time = AverageMeter()
+    losses = AverageMeter()
+    top1 = AverageMeter()
+    top5 = AverageMeter()
+
+    end = time.time()
+    for i, (inputs, target) in enumerate(data_loader):
+        # measure data loading time
+        data_time.update(time.time() - end)
+        if args.gpus is not None:
+            target = target.cuda()
+
+        if not training:
+            with torch.no_grad():
+                input_var = Variable(inputs.type(args.type), volatile=not training)
+                target_var = Variable(target)
+                # compute output
+                output = model(input_var)
+        else:
+            input_var = Variable(inputs.type(args.type), volatile=not training)
+            target_var = Variable(target)
+            # compute output
+            output = model(input_var)
+
+
+        loss = criterion(output, target_var)
+        if type(output) is list:
+            output = output[0]
+
+        # measure accuracy and record loss
+        prec1, prec5 = accuracy(output.data, target, topk=(1, 5))
+        losses.update(loss.item(), inputs.size(0))
+        top1.update(prec1.item(), inputs.size(0))
+        top5.update(prec5.item(), inputs.size(0))
+
+        if training:
+            # compute gradient and do SGD step
+            optimizer.zero_grad()
+            loss.backward()
+            for p in list(model.parameters()):
+                if hasattr(p,'org'):
+                    p.data.copy_(p.org)
+            optimizer.step()
+            for p in list(model.parameters()):
+                if hasattr(p,'org'):
+                    p.org.copy_(p.data.clamp_(-1,1))
+
+
+        # measure elapsed time
+        batch_time.update(time.time() - end)
+        end = time.time()
+
+        if i % args.print_freq == 0:
+            logging.info('{phase} - Epoch: [{0}][{1}/{2}]\t'
+                         'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                         'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                         'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                         'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                         'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+                             epoch, i, len(data_loader),
+                             phase='TRAINING' if training else 'EVALUATING',
+                             batch_time=batch_time,
+                             data_time=data_time, loss=losses, top1=top1, top5=top5))
+
+    return losses.avg, top1.avg, top5.avg
+
+###################################################################################################################
+def forward2(data_loader, model, criterion, epoch=0, training=True, optimizer=None):
     if args.gpus and len(args.gpus) > 1:
         model = torch.nn.DataParallel(model, args.gpus)
     batch_time = AverageMeter()
@@ -318,7 +406,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, optimizer=Non
 def train(data_loader, model, criterion, epoch, optimizer):
     # switch to train mode
     model.train()
-    return forward(data_loader, model, criterion, epoch,
+    return forward2(data_loader, model, criterion, epoch,
                    training=True, optimizer=optimizer)
 
 
