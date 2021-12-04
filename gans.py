@@ -224,8 +224,8 @@ def main():
             train_loader, model, criterion, epoch, optimizer)
 
         # evaluate on validation set
-        val_loss, val_prec1, val_prec5 = validate(
-            val_loader, model, criterion, epoch)
+        #val_loss, val_prec1, val_prec5 = validate(
+        #    val_loader, model, criterion, epoch)
 
         # remember best prec@1 and save checkpoint
         is_best = val_prec1 > best_prec1
@@ -340,6 +340,14 @@ def forward2(data_loader, model, criterion, epoch=0, training=True, optimizer=No
     losses = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
+
+
+
+    #generate real image
+    #real image training
+    #generate fake image
+    #fake image training
+
 
     end = time.time()
     for i, (inputs, target) in enumerate(data_loader):
