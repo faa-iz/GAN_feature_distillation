@@ -74,35 +74,46 @@ parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
 #DEFINE A DISCRIMINATOR NETWORK
 
 class Discriminator(nn.Module):
-    def __init__(self, ngpu):
+    def __init__(self):
         super(Discriminator, self).__init__()
+        nc = 512
+        ngpu = 1
+        # input noise dimension
+        nz = 100
+        # number of generator filters
+        ngf = 64
+        # number of discriminator filters
+        ndf = 64
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
-            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
+            #nn.Conv2d(nc, ndf, 3, 1, 1, bias=False),
+            #nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
-            nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 2),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*2) x 16 x 16
-            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 4),
+            #nn.Conv2d(ndf, ndf * 2, 3, 1, 1, bias=False),
+            #nn.BatchNorm2d(ndf * 2),
+            #nn.LeakyReLU(0.2, inplace=True),
+            ## state size. (ndf*2) x 16 x 16
+            nn.Conv2d(nc, ndf, 3, 1, 0, bias=False),
+            nn.BatchNorm2d(ndf),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*4) x 8 x 8
-            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 8),
+            nn.Conv2d(ndf, ndf * 4, 3, 1, 0, bias=False),
+            nn.BatchNorm2d(ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*8) x 4 x 4
-            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
+            nn.Conv2d(ndf * 4, 1, 4, 1, 0, bias=False),
             nn.Sigmoid()
         )
 
     def forward(self, input):
+        #print(input.shape)
         if input.is_cuda and self.ngpu > 1:
             output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
         else:
             output = self.main(input)
+        #print(input.type())
+        #print(output.type())
 
         return output.view(-1, 1).squeeze(1)
 
@@ -149,7 +160,7 @@ def main():
 
     ###################################################################################################################
     # FAKE IMAGE GENERATOR i.e BNN
-    logging.info("creating model %s", args.model)
+    logging.info("creating model fake generator (student)")
     model = models.__dict__['fgen']
     model_config = {'input_size': args.input_size, 'dataset': args.dataset}
 
@@ -157,9 +168,13 @@ def main():
         model_config = dict(model_config, **literal_eval(args.model_config))
 
     model = model(**model_config)
+    print(model)
+
+    cps = torch.load('results/student/model_best.pth.tar')
+    model.load_state_dict(cps)
 
     # REAL IMAGE GENERATOR i.e FP NETWORK
-    logging.info("creating model %s", args.model)
+    logging.info("creating model real generator (student)")
     teacher = models.__dict__['rgen']
     model_config2 = {'input_size': args.input_size, 'dataset': args.dataset}
 
@@ -168,11 +183,11 @@ def main():
 
     teacher = teacher(**model_config)
 
-    cp = torch.load('../state_dicts/resnet18.pt')
+    cp = torch.load('results/teacher/model_best.pth.tar')['state_dict']
     teacher.load_state_dict(cp)
 
 
-    discriminator = Discriminator(1).cuda()
+    discriminator = Discriminator().cuda()
 
     ###################################################################################################################
 
@@ -226,8 +241,9 @@ def main():
     # define loss function (criterion) and optimizer
 
     criterion = nn.BCELoss()  ## Loss used for DCGAN
-    optimizer_G = optim.Adam(model.parameters(), lr=args.lr)
-    optimizer_D = optim.Adam(discriminator.parameters(), lr=args.lr)  ## discriminator should be defined first
+    #criterion = getattr(model, 'criterion', nn.CrossEntropyLoss)()  ## Loss used for DCGAN
+    #optimizer_G = optim.Adam(model.parameters(), lr=args.lr)
+    #optimizer_D = optim.Adam(discriminator.parameters(), lr=args.lr)  ## discriminator should be defined first
 
     # we can find any code on github
     # criterion = getattr(model, 'criterion', nn.CrossEntropyLoss)()
@@ -254,23 +270,23 @@ def main():
     train_loader = torch.utils.data.DataLoader(
         train_data,
         batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=True)
+        num_workers=args.workers, pin_memory=True, drop_last=True)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
     logging.info('training regime: %s', regime)
 
     #val_loss, val_prec1, val_prec5 = validate(
-    #    val_loader, teacher, criterion, 0)
+    #    val_loader, model.cuda(), criterion, 0)
     #return
 
 
     #for epoch in range(args.start_epoch, args.epochs):
 
-    forward(args.batch_size, train_loader, args.epochs, teacher, model, discriminator, criterion,device = 'cuda')
+    forward(args.batch_size, train_loader, args.epochs, teacher, model, discriminator, args, criterion, device = 'cuda')
 
 
 ###################################################################################################################
-def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, discriminator, criterion,device = 'cuda'):
+def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, discriminator, args, criterion,device = 'cuda'):
         ## changed data_loader to batch_size and number of iteration ##
         ## iteration_n is number of iteration for one epoch, so iteration_n * batch_size = 1 epoch ##
 
@@ -286,8 +302,10 @@ def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, 
 
 
         ## optimizer ##
-        optimizer_G = optim.Adam(student_model.parameters(), lr=args.lr)
-        optimizer_D = optim.Adam(discriminator.parameters(), lr=args.lr)
+        optimizer_G = optim.SGD(student_model.parameters(), lr=0.01, momentum=args.momentum,weight_decay=args.weight_decay)#, betas=(0.5, 0.999))
+        optimizer_D = optim.SGD(discriminator.parameters(), lr=0.1 , momentum=args.momentum, weight_decay=args.weight_decay)#, betas=(0.5, 0.999))
+        lr_scheduler1 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_G, args.epochs,last_epoch=args.start_epoch - 1, eta_min=0)
+        lr_scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_D, args.epochs,last_epoch=args.start_epoch - 1, eta_min=0)
 
         ## real label and fake label ##
         real_label = 1
@@ -303,6 +321,8 @@ def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, 
 
         for epoch in range(iteration_n):
             for i, (inputs, target) in enumerate(data_loader):
+
+                inputs = inputs.to(device)
                 ## initialization ##
                 discriminator.zero_grad()
 
@@ -312,7 +332,7 @@ def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, 
 
                 ### generate real image and label ###
                 r_data = teacher_model(noise_teacher)
-                label = torch.full((batch_size,), real_label, device=device)
+                label = torch.full((batch_size,), real_label, device=device).type(inputs.type())
 
                 ### training discriminator with real data ###
                 output = discriminator(r_data)
@@ -339,7 +359,10 @@ def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, 
                 errG.backward()
                 D_G_z2 = output.mean().item()
                 optimizer_G.step()
-                torch.save(student_model.state_dict,"GAN_FD_BNN.pt")
+
+                lr_scheduler1.step()
+                lr_scheduler2.step()
+                torch.save(student_model.state_dict(),"results/GAN_FD_BNN.pt")
                 print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f' % (
                 epoch, iteration_n, i, len(data_loader), errD_total.item(), errG.item(), D_x, D_G_z1, D_G_z2))
 

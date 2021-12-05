@@ -122,11 +122,11 @@ def main():
         if os.path.isfile(checkpoint_file):
             logging.info("loading checkpoint '%s'", args.resume)
             checkpoint = torch.load(checkpoint_file)
-            args.start_epoch = checkpoint['epoch'] - 1
-            best_prec1 = checkpoint['best_prec1']
-            model.load_state_dict(checkpoint['state_dict'])
-            logging.info("loaded checkpoint '%s' (epoch %s)",
-                         checkpoint_file, checkpoint['epoch'])
+            args.start_epoch = 400
+            #best_prec1 = checkpoint['best_prec1']
+            model.load_state_dict(checkpoint)
+            #logging.info("loaded checkpoint '%s' (epoch %s)",
+            #             checkpoint_file, checkpoint['epoch'])
         else:
             logging.error("no checkpoint found at '%s'", args.resume)
 
