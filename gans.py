@@ -15,6 +15,7 @@ from preprocess import get_transform
 from utils import *
 from datetime import datetime
 from ast import literal_eval
+import torch.optim as optim
 from torchvision.utils import save_image
 
 
@@ -170,6 +171,9 @@ def main():
     cp = torch.load('../state_dicts/resnet18.pt')
     teacher.load_state_dict(cp)
 
+
+    discriminator = Discriminator(1).cuda()
+
     ###################################################################################################################
 
     logging.info("created model with configuration: %s", model_config)
@@ -260,57 +264,13 @@ def main():
     #return
 
 
-    for epoch in range(args.start_epoch, args.epochs):
-        optimizer = adjust_optimizer(optimizer, epoch, regime)
+    #for epoch in range(args.start_epoch, args.epochs):
 
-        # train for one epoch
-        train_loss, train_prec1, train_prec5 = train(
-            train_loader, model, criterion, epoch, optimizer)
+    forward(args.batch_size, train_loader, args.epochs, teacher, model, discriminator, criterion,device = 'cuda')
 
-        # evaluate on validation set
-        #val_loss, val_prec1, val_prec5 = validate(
-        #    val_loader, model, criterion, epoch)
 
-        # remember best prec@1 and save checkpoint
-        is_best = val_prec1 > best_prec1
-        best_prec1 = max(val_prec1, best_prec1)
-
-        save_checkpoint({
-            'epoch': epoch + 1,
-            'model': args.model,
-            'config': args.model_config,
-            'state_dict': model.state_dict(),
-            'best_prec1': best_prec1,
-            'regime': regime
-        }, is_best, path=save_path)
-        logging.info('\n Epoch: {0}\t'
-                     'Training Loss {train_loss:.4f} \t'
-                     'Training Prec@1 {train_prec1:.3f} \t'
-                     'Training Prec@5 {train_prec5:.3f} \t'
-                     'Validation Loss {val_loss:.4f} \t'
-                     'Validation Prec@1 {val_prec1:.3f} \t'
-                     'Validation Prec@5 {val_prec5:.3f} \n'
-                     .format(epoch + 1, train_loss=train_loss, val_loss=val_loss,
-                             train_prec1=train_prec1, val_prec1=val_prec1,
-                             train_prec5=train_prec5, val_prec5=val_prec5))
-
-        results.add(epoch=epoch + 1, train_loss=train_loss, val_loss=val_loss,
-                    train_error1=100 - train_prec1, val_error1=100 - val_prec1,
-                    train_error5=100 - train_prec5, val_error5=100 - val_prec5)
-        #results.plot(x='epoch', y=['train_loss', 'val_loss'],
-        #             title='Loss', ylabel='loss')
-        #results.plot(x='epoch', y=['train_error1', 'val_error1'],
-        #             title='Error@1', ylabel='error %')
-        #results.plot(x='epoch', y=['train_error5', 'val_error5'],
-        #             title='Error@5', ylabel='error %')
-        results.save()
-
-def forward(data_loader, model, criterion, epoch=0, training=True, optimizer=None):
-    ###### Sunjun part ########
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-    def forward2(batch_size, iteration_n, teacher_model, student_model, discriminator, criterion, epoch=0,
-                 training=True, optimizer=None):
+###################################################################################################################
+def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, discriminator, criterion,device = 'cuda'):
         ## changed data_loader to batch_size and number of iteration ##
         ## iteration_n is number of iteration for one epoch, so iteration_n * batch_size = 1 epoch ##
 
@@ -323,6 +283,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, optimizer=Non
         # top1 = AverageMeter()
         # top5 = AverageMeter()
         #### original code ####
+
 
         ## optimizer ##
         optimizer_G = optim.Adam(student_model.parameters(), lr=args.lr)
@@ -340,14 +301,14 @@ def forward(data_loader, model, criterion, epoch=0, training=True, optimizer=Non
         ## noise dimension ##
         nd = 100
 
-        for epoch in range(epoch):
-            for iter in range(iteration_n):
+        for epoch in range(iteration_n):
+            for i, (inputs, target) in enumerate(data_loader):
                 ## initialization ##
                 discriminator.zero_grad()
 
                 ### defining noise for teacher model and student model ###
-                noise_teacher = torch.randn(batch_size, nd, 1, 1, device=device)
-                noise_student = torch.randn(batch_size, nd, 1, 1, device=device)
+                noise_teacher = inputs.cuda()#torch.randn(batch_size, nd, 1, 1, device=device)
+                noise_student = inputs.cuda()#torch.randn(batch_size, nd, 1, 1, device=device)
 
                 ### generate real image and label ###
                 r_data = teacher_model(noise_teacher)
@@ -378,13 +339,13 @@ def forward(data_loader, model, criterion, epoch=0, training=True, optimizer=Non
                 errG.backward()
                 D_G_z2 = output.mean().item()
                 optimizer_G.step()
-
+                torch.save(student_model.state_dict,"GAN_FD_BNN.pt")
                 print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f' % (
-                epoch, niter, i, len(dataloader), errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+                epoch, iteration_n, i, len(data_loader), errD_total.item(), errG.item(), D_x, D_G_z1, D_G_z2))
 
 
 ###################################################################################################################
-def forward2(data_loader, model, criterion, epoch=0, training=True, optimizer=None):
+def forward2(data_loader, model, criterion, epoch, training=True, optimizer=None):
     if args.gpus and len(args.gpus) > 1:
         model = torch.nn.DataParallel(model, args.gpus)
     batch_time = AverageMeter()
@@ -461,7 +422,7 @@ def forward2(data_loader, model, criterion, epoch=0, training=True, optimizer=No
                              data_time=data_time, loss=losses, top1=top1, top5=top5))
 
     return losses.avg, top1.avg, top5.avg
-###################################################################################################################
+
 
 def train(data_loader, model, criterion, epoch, optimizer):
     # switch to train mode
