@@ -72,7 +72,38 @@ parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
 
 #DEFINE A DISCRIMINATOR NETWORK
 
+class Discriminator(nn.Module):
+    def __init__(self, ngpu):
+        super(Discriminator, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is (nc) x 64 x 64
+            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf) x 32 x 32
+            nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*2) x 16 x 16
+            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*4) x 8 x 8
+            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*8) x 4 x 4
+            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
+            nn.Sigmoid()
+        )
 
+    def forward(self, input):
+        if input.is_cuda and self.ngpu > 1:
+            output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+        else:
+            output = self.main(input)
+
+        return output.view(-1, 1).squeeze(1)
 
 
 
@@ -136,6 +167,9 @@ def main():
 
     teacher = teacher(**model_config)
 
+    cp = torch.load('../state_dicts/resnet18.pt')
+    teacher.load_state_dict(cp)
+
     ###################################################################################################################
 
     logging.info("created model with configuration: %s", model_config)
@@ -188,8 +222,9 @@ def main():
 
     # we can find any code on github
     criterion = getattr(model, 'criterion', nn.CrossEntropyLoss)()
-    criterion.type(args.type)
-    model.type(args.type)
+    criterion.cuda()
+    model.cuda()
+    teacher.cuda()
     ###################################################################################################################
 
 
@@ -214,6 +249,10 @@ def main():
 
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
     logging.info('training regime: %s', regime)
+
+    #val_loss, val_prec1, val_prec5 = validate(
+    #    val_loader, teacher, criterion, 0)
+    #return
 
 
     for epoch in range(args.start_epoch, args.epochs):

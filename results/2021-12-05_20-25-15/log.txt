@@ -1,0 +1,7 @@
+2021-12-05 20:25:15 - INFO - saving to ./results/2021-12-05_20-25-15
+2021-12-05 20:25:15 - DEBUG - run arguments: Namespace(batch_size=256, dataset='cifar10', epochs=250, evaluate=None, gpus='0', input_size=None, lr=0.1, model='alexnet', model_config='', momentum=0.9, optimizer='SGD', print_freq=10, results_dir='./results', resume='', save='2021-12-05_20-25-15', start_epoch=0, type='torch.cuda.FloatTensor', weight_decay=0.0001, workers=8)
+2021-12-05 20:25:15 - INFO - creating model alexnet
+2021-12-05 20:25:15 - INFO - creating model alexnet
+2021-12-05 20:25:15 - INFO - created model with configuration: {'input_size': None, 'dataset': 'cifar10'}
+2021-12-05 20:25:15 - INFO - number of parameters: 175258
+2021-12-05 20:25:19 - INFO - training regime: {0: {'optimizer': 'SGD', 'lr': 0.1, 'weight_decay': 0.0001, 'momentum': 0.9}, 81: {'lr': 0.01}, 122: {'lr': 0.001, 'weight_decay': 0}, 164: {'lr': 0.0001}}
