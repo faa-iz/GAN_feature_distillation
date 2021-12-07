@@ -15,6 +15,7 @@ from preprocess import get_transform
 from utils import *
 from datetime import datetime
 from ast import literal_eval
+import torch.nn.functional as F
 from torchvision.utils import save_image
 
 
@@ -248,7 +249,7 @@ def main():
 
     criterion1 = nn.BCELoss()  ## Loss used for DCGAN
     criterion2 = getattr(model, 'criterion', nn.CrossEntropyLoss)()
-    criterion3 = nn.KLDivLoss()  ## Loss used for DCGAN
+    criterion3 = nn.KLDivLoss(reduction='batchmean')  ## Loss used for DCGAN
     # optimizer_G = optim.Adam(model.parameters(), lr=args.lr)
     # optimizer_D = optim.Adam(discriminator.parameters(), lr=args.lr)  ## discriminator should be defined first
     criterion = criterion2
@@ -304,7 +305,7 @@ def main():
             'config': args.model_config,
             'state_dict': model.state_dict(),
             'best_prec1': best_prec1,
-            'regime': regime
+             #'regime': regime
         }, is_best, path=save_path)
         logging.info('\n Epoch: {0}\t'
                      'Training Loss {train_loss:.4f} \t'
@@ -344,6 +345,8 @@ def forward(data_loader, model, teacher, discriminator, criterion1, criterion, c
     real_label = 1
     fake_label = 0
     device='cuda'
+
+    teacher.eval()
     for i, (inputs, target) in enumerate(data_loader):
         # measure data loading time
         data_time.update(time.time() - end)
@@ -361,7 +364,9 @@ def forward(data_loader, model, teacher, discriminator, criterion1, criterion, c
         input_var.cuda()
         target_var = Variable(target)
         # compute output
+        model.zero_grad()
         f_data, output = model(input_var)
+
 
 
         #'''
@@ -375,9 +380,10 @@ def forward(data_loader, model, teacher, discriminator, criterion1, criterion, c
         errD_real = criterion1(d_out, label)
         errD_real.backward()
         D_x = d_out.mean().item()
-
+        '''
         ### training discriminator with fake data ###
-        #f_data, fcout, outf = student_model(noise_student)
+        #model.eval()
+        f_data, output = model(input_var)
         label.fill_(fake_label)
         d_out2 = discriminator(f_data.detach())
         errD_fake = criterion1(d_out2, label)
@@ -386,38 +392,46 @@ def forward(data_loader, model, teacher, discriminator, criterion1, criterion, c
 
         errD_total = errD_real + errD_fake
         optimizer_D.step()
+        model.train()
 
-
+        '''
         ### training student model (generator) ###
-        model.zero_grad()
+        #model.zero_grad()
+        #teacher.zero_grad()
+        discriminator.zero_grad()
+
         label.fill_(real_label)
-        d_out_f = discriminator(f_data)
-        errG = criterion1(d_out_f, label)
+        d_out = discriminator(f_data)
+        errG = 0.4*criterion1(d_out, label)
         #errG.backward()
         D_G_z2 = d_out_f.mean().item()
         #optimizer.step()
 
 
         #torch.save(student_model.state_dict(),"results/GAN_FD_BNN.pt")
-        print('[%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f' % (
-        epoch, i, len(data_loader), errD_total.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+        #print('[%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f' % (
+        #    epoch, i, len(data_loader), errD_total.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+        #'''
 
+        #model.zero_grad()
+        #r_data, rout = teacher(input_var)
+        #f_data, output = model(input_var)
 
+        kl_loss = 0.4*criterion3(F.log_softmax(output, dim=1), F.softmax(rout, dim=1))
+        #kl_loss.backward()
 
-        kl_loss = criterion3(output,rout)
         #'''
 
 
+        #f_data, output = model(input_var)
+        loss_real = 0.4*criterion(output, target_var)
 
 
+        #print(loss_real.shape)
+        #print(kl_loss.shape)
+        loss = loss_real+kl_loss#+*errG
 
-
-
-
-        loss_real = criterion(output, target_var)
-
-
-        loss = loss_real#0.4*loss_real+0.4*kl_loss+0.4*errG
+        #loss = loss_real
         if type(output) is list:
             output = output[0]
 

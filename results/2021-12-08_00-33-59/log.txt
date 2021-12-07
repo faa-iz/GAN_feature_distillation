@@ -1,0 +1,17 @@
+2021-12-08 00:33:59 - INFO - saving to ./results/2021-12-08_00-33-59
+2021-12-08 00:33:59 - DEBUG - run arguments: Namespace(batch_size=128, dataset='cifar10', epochs=250, evaluate=None, gpus='0', input_size=None, lr=0.1, model='resnet_binary', model_config='', momentum=0.9, optimizer='SGD', print_freq=10, results_dir='./results', resume='', save='2021-12-08_00-33-59', start_epoch=0, type='torch.cuda.FloatTensor', weight_decay=0.0001, workers=8)
+2021-12-08 00:33:59 - INFO - creating model fake generator (student)
+2021-12-08 00:33:59 - INFO - creating model real generator (student)
+2021-12-08 00:34:01 - INFO - number of parameters: 11094154
+2021-12-08 00:34:03 - INFO - TRAINING - Epoch: [0][0/391]	Time 0.989 (0.989)	Data 0.175 (0.175)	Loss 1.8898 (1.8898)	Prec@1 7.812 (7.812)	Prec@5 44.531 (44.531)
+2021-12-08 00:34:04 - INFO - TRAINING - Epoch: [0][10/391]	Time 0.128 (0.201)	Data 0.000 (0.016)	Loss 1.9147 (1.8464)	Prec@1 9.375 (9.943)	Prec@5 47.656 (53.835)
+2021-12-08 00:34:05 - INFO - TRAINING - Epoch: [0][20/391]	Time 0.130 (0.167)	Data 0.000 (0.008)	Loss 1.9460 (1.8865)	Prec@1 13.281 (10.677)	Prec@5 53.906 (53.460)
+2021-12-08 00:34:06 - INFO - TRAINING - Epoch: [0][30/391]	Time 0.128 (0.155)	Data 0.000 (0.006)	Loss 1.9490 (1.9126)	Prec@1 14.844 (11.164)	Prec@5 56.250 (53.780)
+2021-12-08 00:34:08 - INFO - TRAINING - Epoch: [0][40/391]	Time 0.129 (0.149)	Data 0.000 (0.004)	Loss 1.9360 (1.9415)	Prec@1 14.844 (11.395)	Prec@5 62.500 (54.021)
+2021-12-08 00:34:09 - INFO - TRAINING - Epoch: [0][50/391]	Time 0.159 (0.147)	Data 0.000 (0.004)	Loss 2.0299 (1.9557)	Prec@1 8.594 (11.412)	Prec@5 58.594 (54.626)
+2021-12-08 00:34:11 - INFO - TRAINING - Epoch: [0][60/391]	Time 0.131 (0.147)	Data 0.000 (0.003)	Loss 1.8658 (1.9580)	Prec@1 12.500 (11.834)	Prec@5 64.062 (55.635)
+2021-12-08 00:34:12 - INFO - TRAINING - Epoch: [0][70/391]	Time 0.129 (0.145)	Data 0.000 (0.003)	Loss 1.9999 (1.9591)	Prec@1 18.750 (12.247)	Prec@5 60.156 (56.470)
+2021-12-08 00:34:13 - INFO - TRAINING - Epoch: [0][80/391]	Time 0.129 (0.143)	Data 0.000 (0.002)	Loss 1.7756 (1.9539)	Prec@1 25.781 (12.760)	Prec@5 71.094 (57.620)
+2021-12-08 00:34:15 - INFO - TRAINING - Epoch: [0][90/391]	Time 0.121 (0.142)	Data 0.000 (0.002)	Loss 2.0139 (1.9484)	Prec@1 10.156 (12.938)	Prec@5 62.500 (58.645)
+2021-12-08 00:34:16 - INFO - TRAINING - Epoch: [0][100/391]	Time 0.133 (0.141)	Data 0.000 (0.002)	Loss 1.9673 (1.9414)	Prec@1 11.719 (13.420)	Prec@5 61.719 (59.367)
+2021-12-08 00:34:17 - INFO - TRAINING - Epoch: [0][110/391]	Time 0.131 (0.141)	Data 0.000 (0.002)	Loss 1.9716 (1.9351)	Prec@1 15.625 (13.725)	Prec@5 56.250 (59.875)
