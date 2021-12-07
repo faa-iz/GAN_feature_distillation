@@ -239,12 +239,12 @@ class ResNet(nn.Module):
 
         x = self.layer1(x)
         x = self.layer2(x)
-        x = self.layer3(x)
+        x1 = self.layer3(x)
 
-        x1 = self.layer4(x)
+        x = self.layer4(x1)
         #print(x1.shape)
 
-        x = self.avgpool(x1)
+        x = self.avgpool(x)
         x = x.reshape(x.size(0), -1)
         x = self.fc(x)
         #print(x.shape)

@@ -77,7 +77,7 @@ parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
-        nc = 512
+        nc = 256
         ngpu = 1
         # input noise dimension
         nz = 100
@@ -88,31 +88,56 @@ class Discriminator(nn.Module):
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
-            #nn.Conv2d(nc, ndf, 3, 1, 1, bias=False),
-            #nn.LeakyReLU(0.2, inplace=True),
+            # nn.Conv2d(nc, ndf, 3, 1, 1, bias=False),
+            # nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
-            #nn.Conv2d(ndf, ndf * 2, 3, 1, 1, bias=False),
-            #nn.BatchNorm2d(ndf * 2),
-            #nn.LeakyReLU(0.2, inplace=True),
+            # nn.Conv2d(ndf, ndf * 2, 3, 1, 1, bias=False),
+            # nn.BatchNorm2d(ndf * 2),
+            # nn.LeakyReLU(0.2, inplace=True),
             ## state size. (ndf*2) x 16 x 16
             nn.Conv2d(nc, ndf, 3, 1, 1, bias=False),
             nn.BatchNorm2d(ndf),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*4) x 8 x 8
+
             nn.Conv2d(ndf, ndf * 4, 3, 1, 1, bias=False),
             nn.BatchNorm2d(ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
+
+            #nn.Conv2d(ndf * 4, ndf * 4, 3, 1, 1, bias=False),
+            #nn.BatchNorm2d(ndf * 4),
+            #nn.LeakyReLU(0.2, inplace=True),
+
+            #nn.Conv2d(ndf * 4, ndf * 4, 3, 1, 1, bias=False),
+            #nn.BatchNorm2d(ndf * 4),
+            #nn.LeakyReLU(0.2, inplace=True),
+
+            #nn.Conv2d(ndf * 4, ndf * 4, 3, 1, 1, bias=False),
+            #nn.BatchNorm2d(ndf * 4),
+            #nn.LeakyReLU(0.2, inplace=True),
+
+            #nn.Conv2d(ndf * 4, ndf * 4, 3, 1, 1, bias=False),
+            #nn.BatchNorm2d(ndf * 4),
+            #nn.LeakyReLU(0.2, inplace=True),
+
+            #nn.Conv2d(ndf * 4, ndf * 4, 3, 1, 1, bias=False),
+            #nn.BatchNorm2d(ndf * 4),
+            #nn.LeakyReLU(0.2, inplace=True),
+
+            nn.Conv2d(ndf * 4, ndf * 4, 3, 1, 1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*8) x 4 x 4
-            nn.Conv2d(ndf * 4, 1, 2, 1, 0, bias=False),
+            nn.Conv2d(ndf * 4, 1, 4, 1, 0, bias=False),
             nn.Sigmoid()
         )
 
     def forward(self, input):
         #print(input.shape)
-        if input.is_cuda and self.ngpu > 1:
-            output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
-        else:
-            output = self.main(input)
+        #if input.is_cuda and self.ngpu > 1:
+        #    output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+        #else:
+        output = self.main(input)
         #print(input.shape)
         #print(output.shape)
 
@@ -152,13 +177,14 @@ def main():
     ###################################################################################################################
     # FAKE IMAGE GENERATOR i.e BNN
     logging.info("creating model fake generator (student)")
-    model = models.__dict__['fgen']
-    model_config = {'input_size': args.input_size, 'dataset': args.dataset}
+    model = models.__dict__['fgen2']
+    model = model()
+    #model_config = {'input_size': args.input_size, 'dataset': args.dataset}
 
-    if args.model_config is not '':
-        model_config = dict(model_config, **literal_eval(args.model_config))
+    #if args.model_config is not '':
+    #    model_config = dict(model_config, **literal_eval(args.model_config))
 
-    model = model(**model_config)
+    #model = model(**model_config)
     print(model)
 
     # cps = torch.load('results/student/model_best.pth.tar')
@@ -264,7 +290,7 @@ def main():
     criterion3.type(args.type)
     model.type(args.type)
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)  # ,weight_decay=args.weight_decay)#, betas=(0.5, 0.999))
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=args.momentum)  # ,weight_decay=args.weight_decay)#, betas=(0.5, 0.999))
     optimizerD = torch.optim.SGD(discriminator.parameters(), lr=0.1, momentum=args.momentum,weight_decay=args.weight_decay)  # , betas=(0.5, 0.999))
     lr_scheduler1 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs, last_epoch=args.start_epoch - 1, eta_min=0)
     lr_scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizerD, args.epochs,last_epoch=args.start_epoch - 1, eta_min=0)
@@ -353,60 +379,48 @@ def forward(data_loader, model, teacher, discriminator, criterion1, criterion, c
         if args.gpus is not None:
             target = target.cuda()
 
-        if not training:
-            with torch.no_grad():
-                input_var = Variable(inputs.type(args.type), volatile=not training)
-                target_var = Variable(target)
-                # compute output
-                output = model(input_var)
+
         #else:
         input_var = Variable(inputs.type(args.type), volatile=not training)
         input_var.cuda()
         target_var = Variable(target)
         # compute output
-        model.zero_grad()
         f_data, output = model(input_var)
 
+
+        r_data, rout = teacher(input_var)
+        #r_data2, rout2 = teacher(input_var)
+        label = torch.full((input_var.shape[0],), real_label, device=device).type(inputs.type()).cuda()
+
+
+
+        ### training discriminator with real data ###
+        outputd = discriminator(r_data.detach())
+        errD_real = criterion1(outputd, label)
+        errD_real.backward()
+        D_x = outputd.mean().item()
 
 
         #'''
-        ### generate real image and label ###
-        r_data, rout = teacher(input_var)
-        label = torch.full((input_var.shape[0],), real_label, device=device).type(inputs.type()).cuda()
-
-        ### training discriminator with real data ###
-        d_out = discriminator(r_data)
-        #print(label.type())
-        errD_real = criterion1(d_out, label)
-        errD_real.backward()
-        D_x = d_out.mean().item()
-        '''
         ### training discriminator with fake data ###
-        #model.eval()
         f_data, output = model(input_var)
         label.fill_(fake_label)
-        d_out2 = discriminator(f_data.detach())
-        errD_fake = criterion1(d_out2, label)
+        outputd = discriminator(f_data.detach())
+        errD_fake = criterion1(outputd, label)
         errD_fake.backward()
-        D_G_z1 = d_out2.mean().item()
+        D_G_z1 = outputd.mean().item()
 
         errD_total = errD_real + errD_fake
         optimizer_D.step()
-        model.train()
 
-        '''
         ### training student model (generator) ###
-        #model.zero_grad()
-        #teacher.zero_grad()
-        discriminator.zero_grad()
-
+        model.zero_grad()
         label.fill_(real_label)
-        d_out = discriminator(f_data)
-        errG = 0.4*criterion1(d_out, label)
-        #errG.backward()
-        D_G_z2 = d_out_f.mean().item()
-        #optimizer.step()
-
+        outputd = discriminator(f_data)
+        errG = criterion1(outputd, label)
+        # errG.backward()
+        D_G_z2 = outputd.mean().item()
+        #optimizer_G.step()
 
         #torch.save(student_model.state_dict(),"results/GAN_FD_BNN.pt")
         #print('[%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f' % (
@@ -417,7 +431,7 @@ def forward(data_loader, model, teacher, discriminator, criterion1, criterion, c
         #r_data, rout = teacher(input_var)
         #f_data, output = model(input_var)
 
-        kl_loss = 0.4*criterion3(F.log_softmax(output, dim=1), F.softmax(rout, dim=1))
+        kl_loss = 0.4*criterion3(F.log_softmax(output, dim=1), F.softmax(rout.detach(), dim=1))
         #kl_loss.backward()
 
         #'''
@@ -429,7 +443,9 @@ def forward(data_loader, model, teacher, discriminator, criterion1, criterion, c
 
         #print(loss_real.shape)
         #print(kl_loss.shape)
-        loss = loss_real+kl_loss#+*errG
+
+
+        loss = loss_real+kl_loss+errG
 
         #loss = loss_real
         if type(output) is list:
@@ -462,6 +478,8 @@ def forward(data_loader, model, teacher, discriminator, criterion1, criterion, c
         end = time.time()
 
         if i % args.print_freq == 0:
+            print('[%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f' % (
+                epoch, i, len(data_loader), errD_total.item(), errG.item(), D_x, D_G_z1, D_G_z2))
             logging.info('{phase} - Epoch: [{0}][{1}/{2}]\t'
                          'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                          'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
