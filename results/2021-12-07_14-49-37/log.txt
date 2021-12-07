@@ -1,0 +1,19 @@
+2021-12-07 14:49:37 - INFO - saving to ./results/2021-12-07_14-49-37
+2021-12-07 14:49:37 - DEBUG - run arguments: Namespace(batch_size=128, dataset='cifar10', epochs=250, evaluate=None, gpus='0', input_size=None, lr=0.1, model='alexnet', model_config='', momentum=0.9, optimizer='SGD', print_freq=10, results_dir='./results', resume='', save='2021-12-07_14-49-37', start_epoch=0, type='torch.cuda.FloatTensor', weight_decay=0.0001, workers=8)
+2021-12-07 14:49:37 - INFO - creating model fake generator (student)
+2021-12-07 14:49:37 - INFO - creating model real generator (student)
+2021-12-07 14:49:38 - INFO - created model with configuration: {'input_size': None, 'dataset': 'cifar10'}
+2021-12-07 14:49:38 - INFO - number of parameters: 11094174
+2021-12-07 14:49:39 - INFO - training regime: {0: {'optimizer': 'Adam', 'lr': 0.005}, 101: {'lr': 0.001}, 142: {'lr': 0.0005}, 184: {'lr': 0.0001}, 220: {'lr': 1e-05}}
+2021-12-07 14:49:40 - INFO - TRAINING - Epoch: [0][0/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.7849 (2.7849)	Prec@1 10.938 (10.938)	Prec@5 43.750 (43.750)
+2021-12-07 14:49:41 - INFO - TRAINING - Epoch: [0][10/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.7259 (2.7095)	Prec@1 11.719 (10.440)	Prec@5 51.562 (51.136)
+2021-12-07 14:49:42 - INFO - TRAINING - Epoch: [0][20/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.6994 (2.7103)	Prec@1 7.812 (10.082)	Prec@5 53.125 (51.562)
+2021-12-07 14:49:43 - INFO - TRAINING - Epoch: [0][30/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.6247 (2.6983)	Prec@1 10.938 (10.232)	Prec@5 52.344 (51.714)
+2021-12-07 14:49:44 - INFO - TRAINING - Epoch: [0][40/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.6450 (2.7015)	Prec@1 8.594 (10.156)	Prec@5 52.344 (51.772)
+2021-12-07 14:49:45 - INFO - TRAINING - Epoch: [0][50/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.5699 (2.7107)	Prec@1 13.281 (10.325)	Prec@5 52.344 (51.057)
+2021-12-07 14:49:46 - INFO - TRAINING - Epoch: [0][60/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.7152 (2.7102)	Prec@1 13.281 (10.566)	Prec@5 50.000 (50.961)
+2021-12-07 14:49:47 - INFO - TRAINING - Epoch: [0][70/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.7251 (2.7140)	Prec@1 10.938 (10.486)	Prec@5 49.219 (50.704)
+2021-12-07 14:49:48 - INFO - TRAINING - Epoch: [0][80/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.7871 (2.7211)	Prec@1 12.500 (10.523)	Prec@5 47.656 (50.367)
+2021-12-07 14:49:49 - INFO - TRAINING - Epoch: [0][90/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.5443 (2.7162)	Prec@1 13.281 (10.379)	Prec@5 61.719 (50.695)
+2021-12-07 14:49:50 - INFO - TRAINING - Epoch: [0][100/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.7047 (2.7179)	Prec@1 13.281 (10.558)	Prec@5 52.344 (50.619)
+2021-12-07 14:49:51 - INFO - TRAINING - Epoch: [0][110/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.8217 (2.7211)	Prec@1 9.375 (10.494)	Prec@5 49.219 (50.429)

@@ -67,6 +67,59 @@ parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
                     help='evaluate model FILE on validation set')
 
 
+
+
+#######################################################################################
+
+#DEFINE A DISCRIMINATOR NETWORK
+
+class Discriminator(nn.Module):
+    def __init__(self):
+        super(Discriminator, self).__init__()
+        nc = 512
+        ngpu = 1
+        # input noise dimension
+        nz = 100
+        # number of generator filters
+        ngf = 64
+        # number of discriminator filters
+        ndf = 64
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is (nc) x 64 x 64
+            #nn.Conv2d(nc, ndf, 3, 1, 1, bias=False),
+            #nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf) x 32 x 32
+            #nn.Conv2d(ndf, ndf * 2, 3, 1, 1, bias=False),
+            #nn.BatchNorm2d(ndf * 2),
+            #nn.LeakyReLU(0.2, inplace=True),
+            ## state size. (ndf*2) x 16 x 16
+            nn.Conv2d(nc, ndf, 3, 1, 1, bias=False),
+            nn.BatchNorm2d(ndf),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*4) x 8 x 8
+            nn.Conv2d(ndf, ndf * 4, 3, 1, 1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*8) x 4 x 4
+            nn.Conv2d(ndf * 4, 1, 2, 1, 0, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, input):
+        #print(input.shape)
+        if input.is_cuda and self.ngpu > 1:
+            output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+        else:
+            output = self.main(input)
+        #print(input.shape)
+        #print(output.shape)
+
+        return output.view(-1, 1).squeeze(1)
+
+###########################################################################
+
+
 def main():
     global args, best_prec1
     best_prec1 = 0
@@ -95,15 +148,38 @@ def main():
         args.gpus = None
 
     # create model
-    logging.info("creating model %s", args.model)
-    model = models.__dict__[args.model]
+    ###################################################################################################################
+    # FAKE IMAGE GENERATOR i.e BNN
+    logging.info("creating model fake generator (student)")
+    model = models.__dict__['fgen']
     model_config = {'input_size': args.input_size, 'dataset': args.dataset}
 
     if args.model_config is not '':
         model_config = dict(model_config, **literal_eval(args.model_config))
 
     model = model(**model_config)
-    logging.info("created model with configuration: %s", model_config)
+    print(model)
+
+    # cps = torch.load('results/student/model_best.pth.tar')
+    # model.load_state_dict(cps)
+
+    # REAL IMAGE GENERATOR i.e FP NETWORK
+    logging.info("creating model real generator (student)")
+    teacher = models.__dict__['rgen']
+    model_config2 = {'input_size': args.input_size, 'dataset': args.dataset}
+
+    if args.model_config is not '':
+        model_config2 = dict(model_config, **literal_eval(args.model_config))
+
+    teacher = teacher()
+
+    # cp = torch.load('results/teacher/model_best.pth.tar')['state_dict']
+    cp = torch.load('../state_dicts/resnet34.pt')  # ['state_dict']
+    teacher.load_state_dict(cp)
+
+    discriminator = Discriminator().cuda()
+
+    ###################################################################################################################
 
     # optionally resume from a checkpoint
     if args.evaluate:
@@ -141,10 +217,10 @@ def main():
                               input_size=args.input_size, augment=False)
     }
     transform = getattr(model, 'input_transform', default_transform)
-    regime = getattr(model, 'regime', {0: {'optimizer': args.optimizer,
-                                           'lr': args.lr,
-                                           'momentum': args.momentum,
-                                           'weight_decay': args.weight_decay}})
+    #regime = getattr(model, 'regime', {0: {'optimizer': args.optimizer,
+    #                                       'lr': args.lr,
+    #                                       'momentum': args.momentum,
+    #                                       'weight_decay': args.weight_decay}})
     # define loss function (criterion) and optimizer
     criterion = getattr(model, 'criterion', nn.CrossEntropyLoss)()
     criterion.type(args.type)
@@ -166,16 +242,53 @@ def main():
         batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=True)
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
-    logging.info('training regime: %s', regime)
+    ###################################################################################################################
+    ##### Sunjun Part ##########
+    # define loss function (criterion) and optimizer
+
+    criterion1 = nn.BCELoss()  ## Loss used for DCGAN
+    criterion2 = getattr(model, 'criterion', nn.CrossEntropyLoss)()
+    criterion3 = nn.KLDivLoss()  ## Loss used for DCGAN
+    # optimizer_G = optim.Adam(model.parameters(), lr=args.lr)
+    # optimizer_D = optim.Adam(discriminator.parameters(), lr=args.lr)  ## discriminator should be defined first
+    criterion = criterion2
+    # we can find any code on github
+    # criterion = getattr(model, 'criterion', nn.CrossEntropyLoss)()
+
+
+
+    criterion.type(args.type)
+    criterion1.type(args.type)
+    criterion2.type(args.type)
+    criterion3.type(args.type)
+    model.type(args.type)
+
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)  # ,weight_decay=args.weight_decay)#, betas=(0.5, 0.999))
+    optimizerD = torch.optim.SGD(discriminator.parameters(), lr=0.1, momentum=args.momentum,weight_decay=args.weight_decay)  # , betas=(0.5, 0.999))
+    lr_scheduler1 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs, last_epoch=args.start_epoch - 1, eta_min=0)
+    lr_scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizerD, args.epochs,last_epoch=args.start_epoch - 1, eta_min=0)
+
+    ## real label and fake label ##
+    real_label = 1
+    fake_label = 0
+
+    ## setting device for the models ##
+    teacher.cuda()
+    teacher.eval()
+    model.cuda()
+    model.train()
+    discriminator.cuda()
+
+    ##### Sunjun Part ##########
+    ###################################################################################################################
 
 
     for epoch in range(args.start_epoch, args.epochs):
-        optimizer = adjust_optimizer(optimizer, epoch, regime)
+        #optimizer = adjust_optimizer(optimizer, epoch, regime)
 
         # train for one epoch
         train_loss, train_prec1, train_prec5 = train(
-            train_loader, model, criterion, epoch, optimizer)
+            train_loader,  model, teacher, discriminator, criterion1, criterion, criterion3, epoch, lr_scheduler1, lr_scheduler2, optimizer, optimizerD,)
 
         # evaluate on validation set
         val_loss, val_prec1, val_prec5 = validate(
@@ -216,7 +329,142 @@ def main():
         results.save()
 
 
-def forward(data_loader, model, criterion, epoch=0, training=True, optimizer=None):
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+############################################################################################
+def forward(data_loader, model, teacher, discriminator, criterion1, criterion, criterion3, epoch, lr_scheduler1, lr_scheduler2, training=True, optimizer=None, optimizer_D = None):
+    if args.gpus and len(args.gpus) > 1:
+        model = torch.nn.DataParallel(model, args.gpus)
+    batch_time = AverageMeter()
+    data_time = AverageMeter()
+    losses = AverageMeter()
+    top1 = AverageMeter()
+    top5 = AverageMeter()
+
+    end = time.time()
+    real_label = 1
+    fake_label = 0
+    device='cuda'
+    for i, (inputs, target) in enumerate(data_loader):
+        # measure data loading time
+        data_time.update(time.time() - end)
+        if args.gpus is not None:
+            target = target.cuda()
+
+        if not training:
+            with torch.no_grad():
+                input_var = Variable(inputs.type(args.type), volatile=not training)
+                target_var = Variable(target)
+                # compute output
+                output = model(input_var)
+        #else:
+        input_var = Variable(inputs.type(args.type), volatile=not training)
+        input_var.cuda()
+        target_var = Variable(target)
+        # compute output
+        f_data, output = model(input_var)
+
+
+        #'''
+        ### generate real image and label ###
+        r_data, rout = teacher(input_var)
+        label = torch.full((input_var.shape[0],), real_label, device=device).type(inputs.type()).cuda()
+
+        ### training discriminator with real data ###
+        d_out = discriminator(r_data)
+        #print(label.type())
+        errD_real = criterion1(d_out, label)
+        errD_real.backward()
+        D_x = d_out.mean().item()
+
+        ### training discriminator with fake data ###
+        #f_data, fcout, outf = student_model(noise_student)
+        label.fill_(fake_label)
+        d_out2 = discriminator(f_data.detach())
+        errD_fake = criterion1(d_out2, label)
+        errD_fake.backward()
+        D_G_z1 = d_out2.mean().item()
+
+        errD_total = errD_real + errD_fake
+        optimizer_D.step()
+
+
+        ### training student model (generator) ###
+        model.zero_grad()
+        label.fill_(real_label)
+        d_out_f = discriminator(f_data)
+        errG = criterion1(d_out_f, label)
+        #errG.backward()
+        D_G_z2 = d_out_f.mean().item()
+        #optimizer.step()
+
+
+        #torch.save(student_model.state_dict(),"results/GAN_FD_BNN.pt")
+        print('[%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f' % (
+        epoch, i, len(data_loader), errD_total.item(), errG.item(), D_x, D_G_z1, D_G_z2))
+
+
+
+        kl_loss = criterion3(output,rout)
+        #'''
+
+
+
+
+
+
+
+
+        loss_real = criterion(output, target_var)
+
+
+        loss = loss_real#0.4*loss_real+0.4*kl_loss+0.4*errG
+        if type(output) is list:
+            output = output[0]
+
+
+        # measure accuracy and record loss
+        prec1, prec5 = accuracy(output.data, target, topk=(1, 5))
+        losses.update(loss.item(), inputs.size(0))
+        top1.update(prec1.item(), inputs.size(0))
+        top5.update(prec5.item(), inputs.size(0))
+
+        if training:
+            # compute gradient and do SGD step
+            optimizer.zero_grad()
+            loss.backward()
+            for p in list(model.parameters()):
+                if hasattr(p,'org'):
+                    p.data.copy_(p.org)
+            optimizer.step()
+            lr_scheduler1.step()
+            lr_scheduler2.step()
+            for p in list(model.parameters()):
+                if hasattr(p,'org'):
+                    p.org.copy_(p.data.clamp_(-1,1))
+
+
+        # measure elapsed time
+        batch_time.update(time.time() - end)
+        end = time.time()
+
+        if i % args.print_freq == 0:
+            logging.info('{phase} - Epoch: [{0}][{1}/{2}]\t'
+                         'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                         'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                         'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                         'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                         'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+                             epoch, i, len(data_loader),
+                             phase='TRAINING' if training else 'EVALUATING',
+                             batch_time=batch_time,
+                             data_time=data_time, loss=losses, top1=top1, top5=top5))
+
+    return losses.avg, top1.avg, top5.avg
+
+############################################################################################
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+def forward2(data_loader, model, criterion, epoch=0, training=True, optimizer=None):
     if args.gpus and len(args.gpus) > 1:
         model = torch.nn.DataParallel(model, args.gpus)
     batch_time = AverageMeter()
@@ -237,12 +485,13 @@ def forward(data_loader, model, criterion, epoch=0, training=True, optimizer=Non
                 input_var = Variable(inputs.type(args.type), volatile=not training)
                 target_var = Variable(target)
                 # compute output
-                output = model(input_var)
+                rdata, output = model(input_var)
         else:
             input_var = Variable(inputs.type(args.type), volatile=not training)
             target_var = Variable(target)
             # compute output
-            output = model(input_var)
+            rdata, output = model(input_var)
+
 
 
         loss = criterion(output, target_var)
@@ -287,17 +536,17 @@ def forward(data_loader, model, criterion, epoch=0, training=True, optimizer=Non
     return losses.avg, top1.avg, top5.avg
 
 
-def train(data_loader, model, criterion, epoch, optimizer):
+def train(data_loader,  model, teacher, discriminator, criterion1, criterion, criterion3, epoch, lr_scheduler1, lr_scheduler2, optimizer, optimizerD):
     # switch to train mode
     model.train()
-    return forward(data_loader, model, criterion, epoch,
-                   training=True, optimizer=optimizer)
+    return forward(data_loader,  model, teacher, discriminator, criterion1, criterion, criterion3, epoch, lr_scheduler1, lr_scheduler2,
+                   training=True, optimizer=optimizer, optimizer_D = optimizerD)
 
 
 def validate(data_loader, model, criterion, epoch):
     # switch to evaluate mode
     model.eval()
-    return forward(data_loader, model, criterion, epoch,
+    return forward2(data_loader, model, criterion, epoch,
                    training=False, optimizer=None)
 
 

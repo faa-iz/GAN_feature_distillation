@@ -1,0 +1,26 @@
+2021-12-07 14:27:16 - INFO - saving to ./results/2021-12-07_14-27-16
+2021-12-07 14:27:16 - DEBUG - run arguments: Namespace(batch_size=96, dataset='cifar10', epochs=250, evaluate=None, gpus='0', input_size=None, lr=0.1, model='alexnet', model_config='', momentum=0.9, optimizer='SGD', print_freq=10, results_dir='./results', resume='', save='2021-12-07_14-27-16', start_epoch=0, type='torch.cuda.FloatTensor', weight_decay=0.0001, workers=8)
+2021-12-07 14:27:16 - INFO - creating model fake generator (student)
+2021-12-07 14:27:16 - INFO - creating model real generator (student)
+2021-12-07 14:27:17 - INFO - created model with configuration: {'input_size': None, 'dataset': 'cifar10'}
+2021-12-07 14:27:17 - INFO - number of parameters: 17176478
+2021-12-07 14:27:18 - INFO - training regime: {0: {'optimizer': 'Adam', 'lr': 0.005}, 101: {'lr': 0.001}, 142: {'lr': 0.0005}, 184: {'lr': 0.0001}, 220: {'lr': 1e-05}}
+2021-12-07 14:27:19 - INFO - TRAINING - Epoch: [0][0/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 1.4691 (1.4691)	Prec@1 13.542 (13.542)	Prec@5 54.167 (54.167)
+2021-12-07 14:27:23 - INFO - TRAINING - Epoch: [0][10/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 14.1704 (17.5925)	Prec@1 13.542 (12.027)	Prec@5 52.083 (50.568)
+2021-12-07 14:27:27 - INFO - TRAINING - Epoch: [0][20/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 29.8262 (21.1974)	Prec@1 10.417 (10.813)	Prec@5 51.042 (50.843)
+2021-12-07 14:27:31 - INFO - TRAINING - Epoch: [0][30/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 27.2815 (24.5088)	Prec@1 7.292 (9.778)	Prec@5 55.208 (50.269)
+2021-12-07 14:27:35 - INFO - TRAINING - Epoch: [0][40/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 37.2153 (26.6109)	Prec@1 5.208 (9.477)	Prec@5 44.792 (50.711)
+2021-12-07 14:27:39 - INFO - TRAINING - Epoch: [0][50/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 34.0011 (28.2966)	Prec@1 9.375 (9.498)	Prec@5 50.000 (50.470)
+2021-12-07 14:27:43 - INFO - TRAINING - Epoch: [0][60/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 37.8405 (29.6819)	Prec@1 10.417 (9.785)	Prec@5 47.917 (50.546)
+2021-12-07 14:27:47 - INFO - TRAINING - Epoch: [0][70/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 35.7957 (30.6802)	Prec@1 13.542 (9.830)	Prec@5 52.083 (50.469)
+2021-12-07 14:27:51 - INFO - TRAINING - Epoch: [0][80/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 37.4241 (31.4281)	Prec@1 11.458 (9.825)	Prec@5 50.000 (50.656)
+2021-12-07 14:27:55 - INFO - TRAINING - Epoch: [0][90/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 38.4044 (32.1509)	Prec@1 16.667 (9.982)	Prec@5 51.042 (50.538)
+2021-12-07 14:27:59 - INFO - TRAINING - Epoch: [0][100/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 37.2451 (32.5998)	Prec@1 6.250 (9.932)	Prec@5 47.917 (50.392)
+2021-12-07 14:28:03 - INFO - TRAINING - Epoch: [0][110/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 37.7231 (32.7501)	Prec@1 9.375 (10.013)	Prec@5 45.833 (50.385)
+2021-12-07 14:28:06 - INFO - TRAINING - Epoch: [0][120/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 34.4884 (32.9035)	Prec@1 15.625 (10.133)	Prec@5 56.250 (50.275)
+2021-12-07 14:28:10 - INFO - TRAINING - Epoch: [0][130/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 35.6841 (33.0539)	Prec@1 7.292 (10.170)	Prec@5 42.708 (50.366)
+2021-12-07 14:28:14 - INFO - TRAINING - Epoch: [0][140/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 37.4272 (33.1879)	Prec@1 9.375 (10.099)	Prec@5 39.583 (50.369)
+2021-12-07 14:28:18 - INFO - TRAINING - Epoch: [0][150/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 33.6927 (33.3364)	Prec@1 11.458 (10.106)	Prec@5 59.375 (50.373)
+2021-12-07 14:28:22 - INFO - TRAINING - Epoch: [0][160/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 35.9069 (33.4597)	Prec@1 7.292 (10.106)	Prec@5 40.625 (50.356)
+2021-12-07 14:28:26 - INFO - TRAINING - Epoch: [0][170/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 36.2441 (33.5610)	Prec@1 15.625 (10.143)	Prec@5 52.083 (50.457)
+2021-12-07 14:28:30 - INFO - TRAINING - Epoch: [0][180/520]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 33.7663 (33.7070)	Prec@1 8.333 (10.089)	Prec@5 55.208 (50.391)

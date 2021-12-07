@@ -169,13 +169,13 @@ class ResNet_imagenet(ResNet):
         self.fc = BinarizeLinear(512 * block.expansion, num_classes)
 
         init_model(self)
-        self.regime = {
-            0: {'optimizer': 'SGD', 'lr': 1e-1,
-                'weight_decay': 1e-4, 'momentum': 0.9},
-            30: {'lr': 1e-2},
-            60: {'lr': 1e-3, 'weight_decay': 0},
-            90: {'lr': 1e-4}
-        }
+        #self.regime = {
+        #    0: {'optimizer': 'SGD', 'lr': 1e-1,
+        #        'weight_decay': 1e-4, 'momentum': 0.9},
+        #    30: {'lr': 1e-2},
+        #    60: {'lr': 1e-3, 'weight_decay': 0},
+        #    90: {'lr': 1e-4}
+        #}
 
 
 class ResNet_cifar10(ResNet):

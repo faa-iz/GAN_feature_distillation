@@ -76,7 +76,7 @@ parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
-        nc = 512
+        nc = 128
         ngpu = 1
         # input noise dimension
         nz = 100
@@ -112,8 +112,8 @@ class Discriminator(nn.Module):
             output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
         else:
             output = self.main(input)
-        #print(input.type())
-        #print(output.type())
+        #print(input.shape)
+        #print(output.shape)
 
         return output.view(-1, 1).squeeze(1)
 
@@ -161,7 +161,7 @@ def main():
     ###################################################################################################################
     # FAKE IMAGE GENERATOR i.e BNN
     logging.info("creating model fake generator (student)")
-    model = models.__dict__['fgen']
+    model = models.__dict__['resnet_binary']
     model_config = {'input_size': args.input_size, 'dataset': args.dataset}
 
     if args.model_config is not '':
@@ -170,8 +170,8 @@ def main():
     model = model(**model_config)
     print(model)
 
-    cps = torch.load('results/student/model_best.pth.tar')
-    model.load_state_dict(cps)
+    #cps = torch.load('results/student/model_best.pth.tar')
+    #model.load_state_dict(cps)
 
     # REAL IMAGE GENERATOR i.e FP NETWORK
     logging.info("creating model real generator (student)")
@@ -181,9 +181,10 @@ def main():
     if args.model_config is not '':
         model_config2 = dict(model_config, **literal_eval(args.model_config))
 
-    teacher = teacher(**model_config)
+    teacher = teacher()
 
-    cp = torch.load('results/teacher/model_best.pth.tar')['state_dict']
+    #cp = torch.load('results/teacher/model_best.pth.tar')['state_dict']
+    cp = torch.load('../state_dicts/resnet34.pt')#['state_dict']
     teacher.load_state_dict(cp)
 
 
@@ -241,13 +242,16 @@ def main():
     # define loss function (criterion) and optimizer
 
     criterion = nn.BCELoss()  ## Loss used for DCGAN
-    #criterion = getattr(model, 'criterion', nn.CrossEntropyLoss)()  ## Loss used for DCGAN
+    criterion2 = getattr(model, 'criterion', nn.CrossEntropyLoss)()
+    criterion3 = nn.KLDivLoss()## Loss used for DCGAN
     #optimizer_G = optim.Adam(model.parameters(), lr=args.lr)
     #optimizer_D = optim.Adam(discriminator.parameters(), lr=args.lr)  ## discriminator should be defined first
 
     # we can find any code on github
     # criterion = getattr(model, 'criterion', nn.CrossEntropyLoss)()
     criterion.type(args.type)
+    criterion2.type(args.type)
+    criterion3.type(args.type)
     model.type(args.type)
     ##### Sunjun Part ##########
     ###################################################################################################################
@@ -276,36 +280,36 @@ def main():
     logging.info('training regime: %s', regime)
 
     #val_loss, val_prec1, val_prec5 = validate(
-    #    val_loader, model.cuda(), criterion, 0)
+    #    val_loader, teacher.cuda(), criterion, 0)
     #return
 
 
     #for epoch in range(args.start_epoch, args.epochs):
 
-    forward(args.batch_size, train_loader, args.epochs, teacher, model, discriminator, args, criterion, device = 'cuda')
+    forward2(args.batch_size, train_loader, val_loader, args.epochs, teacher, model, discriminator, args, criterion, criterion2, criterion3, device = 'cuda')
 
 
 ###################################################################################################################
-def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, discriminator, args, criterion,device = 'cuda'):
+def forward2(batch_size, data_loader, val_loader, iteration_n, teacher_model, student_model, discriminator, args, criterion, criterion2, criterion3, device = 'cuda'):
         ## changed data_loader to batch_size and number of iteration ##
         ## iteration_n is number of iteration for one epoch, so iteration_n * batch_size = 1 epoch ##
 
         #### original code ####
         # if args.gpus and len(args.gpus) > 1:
         #     model = torch.nn.DataParallel(model, args.gpus)
-        # batch_time = AverageMeter()
-        # data_time = AverageMeter()
-        # losses = AverageMeter()
-        # top1 = AverageMeter()
-        # top5 = AverageMeter()
+        batch_time = AverageMeter()
+        data_time = AverageMeter()
+        losses = AverageMeter()
+        top1 = AverageMeter()
+        top5 = AverageMeter()
         #### original code ####
 
 
         ## optimizer ##
-        optimizer_G = optim.SGD(student_model.parameters(), lr=0.01, momentum=args.momentum,weight_decay=args.weight_decay)#, betas=(0.5, 0.999))
+        optimizer_G = optim.SGD(student_model.parameters(), lr=args.lr, momentum=args.momentum)#,weight_decay=args.weight_decay)#, betas=(0.5, 0.999))
         optimizer_D = optim.SGD(discriminator.parameters(), lr=0.1 , momentum=args.momentum, weight_decay=args.weight_decay)#, betas=(0.5, 0.999))
         lr_scheduler1 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_G, args.epochs,last_epoch=args.start_epoch - 1, eta_min=0)
-        lr_scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_D, args.epochs,last_epoch=args.start_epoch - 1, eta_min=0)
+        #lr_scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_D, args.epochs,last_epoch=args.start_epoch - 1, eta_min=0)
 
         ## real label and fake label ##
         real_label = 1
@@ -313,7 +317,9 @@ def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, 
 
         ## setting device for the models ##
         teacher_model.cuda()
+        teacher_model.eval()
         student_model.cuda()
+        student_model.train()
         discriminator.cuda()
 
         ## noise dimension ##
@@ -323,15 +329,26 @@ def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, 
             for i, (inputs, target) in enumerate(data_loader):
 
                 inputs = inputs.to(device)
+                #if args.gpus is not None:
+
+                target = target.cuda()
+                input_var = Variable(inputs.type(args.type), volatile=False)
+                target_var = Variable(target)
+                target_var = target_var.cuda()
+
+
+
+
+
                 ## initialization ##
                 discriminator.zero_grad()
 
                 ### defining noise for teacher model and student model ###
-                noise_teacher = inputs.cuda()#torch.randn(batch_size, nd, 1, 1, device=device)
-                noise_student = inputs.cuda()#torch.randn(batch_size, nd, 1, 1, device=device)
-
+                noise_teacher = input_var.cuda()#torch.randn(batch_size, nd, 1, 1, device=device)
+                noise_student = input_var.cuda()#torch.randn(batch_size, nd, 1, 1, device=device)
+                '''
                 ### generate real image and label ###
-                r_data = teacher_model(noise_teacher)
+                r_data, rout = teacher_model(noise_teacher)
                 label = torch.full((batch_size,), real_label, device=device).type(inputs.type())
 
                 ### training discriminator with real data ###
@@ -341,7 +358,7 @@ def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, 
                 D_x = output.mean().item()
 
                 ### training discriminator with fake data ###
-                f_data = student_model(noise_student)
+                f_data, fcout, outf= student_model(noise_student)
                 label.fill_(fake_label)
                 output = discriminator(f_data.detach())
                 errD_fake = criterion(output, label)
@@ -356,19 +373,78 @@ def forward(batch_size, data_loader, iteration_n, teacher_model, student_model, 
                 label.fill_(real_label)
                 output = discriminator(f_data)
                 errG = criterion(output, label)
-                errG.backward()
+                #errG.backward()
                 D_G_z2 = output.mean().item()
                 optimizer_G.step()
 
-                lr_scheduler1.step()
-                lr_scheduler2.step()
+
                 torch.save(student_model.state_dict(),"results/GAN_FD_BNN.pt")
                 print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f' % (
                 epoch, iteration_n, i, len(data_loader), errD_total.item(), errG.item(), D_x, D_G_z1, D_G_z2))
 
 
+                kl_loss = criterion3(fcout,rout)
+                '''
+                #f_data, fcout, outf = student_model(noise_student)
+                outf = student_model(noise_student)
+                loss_out = criterion2(outf, target_var)
+                loss = loss_out  # 0.5 * errG + 0.5 * loss_out# + 0.5 * kl_loss
+                if type(outf) is list:
+                    outf = outf[0]
+
+
+
+                prec1, prec5 = accuracy(outf.data, target, topk=(1, 5))
+                losses.update(loss.item(), inputs.size(0))
+                top1.update(prec1.item(), inputs.size(0))
+                top5.update(prec5.item(), inputs.size(0))
+
+
+
+
+
+
+
+                loss.backward()
+                optimizer_G.zero_grad()
+                for p in list(student_model.parameters()):
+                    if hasattr(p, 'org'):
+                        p.data.copy_(p.org)
+                lr_scheduler1.step()
+                #lr_scheduler2.step()
+                optimizer_G.step()
+                for p in list(student_model.parameters()):
+                    if hasattr(p, 'org'):
+                        p.org.copy_(p.data.clamp_(-1, 1))
+
+
+                # measure accuracy and record loss
+
+
+                if i % args.print_freq == 0:
+                    logging.info('{phase} - Epoch: [{0}][{1}/{2}]\t'
+                                 'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                                 'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                                 'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                                 'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                                 'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+                        epoch, i, len(data_loader),
+                        phase='TRAINING',
+                        batch_time=batch_time,
+                        data_time=data_time, loss=losses, top1=top1, top5=top5))
+            val_loss, val_prec1, val_prec5 = validate(val_loader, student_model, criterion2, epoch)
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'model': args.model,
+                'config': args.model_config,
+                'state_dict': student_model.state_dict(),
+                'best_prec1': best_prec1,
+            }, False, path='results/GAN_student_bnn')
+
+
+
 ###################################################################################################################
-def forward2(data_loader, model, criterion, epoch, training=True, optimizer=None):
+def forward(data_loader, model, criterion, epoch, training=True, optimizer=None):
     if args.gpus and len(args.gpus) > 1:
         model = torch.nn.DataParallel(model, args.gpus)
     batch_time = AverageMeter()

@@ -1,0 +1,6 @@
+2021-12-07 21:16:56 - INFO - saving to ./results/2021-12-07_21-16-56
+2021-12-07 21:16:56 - DEBUG - run arguments: Namespace(batch_size=96, dataset='cifar10', epochs=250, evaluate=None, gpus='0', input_size=None, lr=0.1, model='resnet_binary', model_config='', momentum=0.9, optimizer='SGD', print_freq=10, results_dir='./results', resume='', save='2021-12-07_21-16-56', start_epoch=0, type='torch.cuda.FloatTensor', weight_decay=0.0001, workers=8)
+2021-12-07 21:16:56 - INFO - creating model fake generator (student)
+2021-12-07 21:16:56 - INFO - creating model real generator (student)
+2021-12-07 21:16:57 - INFO - number of parameters: 17176478
+2021-12-07 21:17:00 - INFO - TRAINING - Epoch: [0][0/521]	Time 1.645 (1.645)	Data 0.150 (0.150)	Loss 2.7936 (2.7936)	Prec@1 8.333 (8.333)	Prec@5 44.792 (44.792)

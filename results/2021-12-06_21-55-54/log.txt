@@ -1,0 +1,4 @@
+2021-12-06 21:55:54 - INFO - saving to ./results/2021-12-06_21-55-54
+2021-12-06 21:55:54 - DEBUG - run arguments: Namespace(batch_size=128, dataset='cifar10', epochs=25, evaluate=None, gpus='0', input_size=None, lr=0.1, model='alexnet', model_config='', momentum=0.9, optimizer='SGD', print_freq=10, results_dir='./results', resume='', save='2021-12-06_21-55-54', start_epoch=0, type='torch.cuda.FloatTensor', weight_decay=0.0001, workers=8)
+2021-12-06 21:55:54 - INFO - creating model fake generator (student)
+2021-12-06 21:55:55 - INFO - creating model real generator (student)

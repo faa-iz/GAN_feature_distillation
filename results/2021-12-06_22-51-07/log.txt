@@ -1,0 +1,15 @@
+2021-12-06 22:51:07 - INFO - saving to ./results/2021-12-06_22-51-07
+2021-12-06 22:51:07 - DEBUG - run arguments: Namespace(batch_size=128, dataset='cifar10', epochs=25, evaluate=None, gpus='0', input_size=None, lr=0.1, model='alexnet', model_config='', momentum=0.9, optimizer='SGD', print_freq=10, results_dir='./results', resume='', save='2021-12-06_22-51-07', start_epoch=0, type='torch.cuda.FloatTensor', weight_decay=0.0001, workers=8)
+2021-12-06 22:51:07 - INFO - creating model fake generator (student)
+2021-12-06 22:51:08 - INFO - creating model real generator (student)
+2021-12-06 22:51:08 - INFO - created model with configuration: {'input_size': None, 'dataset': 'cifar10'}
+2021-12-06 22:51:08 - INFO - number of parameters: 11094174
+2021-12-06 22:51:09 - INFO - training regime: {0: {'optimizer': 'Adam', 'lr': 0.005}, 101: {'lr': 0.001}, 142: {'lr': 0.0005}, 184: {'lr': 0.0001}, 220: {'lr': 1e-05}}
+2021-12-06 22:51:10 - INFO - EVALUATING - Epoch: [0][0/79]	Time 0.861 (0.861)	Data 0.117 (0.117)	Loss 0.2730 (0.2730)	Prec@1 92.969 (92.969)	Prec@5 100.000 (100.000)
+2021-12-06 22:51:10 - INFO - EVALUATING - Epoch: [0][10/79]	Time 0.049 (0.123)	Data 0.000 (0.011)	Loss 0.2546 (0.2427)	Prec@1 92.188 (93.466)	Prec@5 99.219 (99.787)
+2021-12-06 22:51:11 - INFO - EVALUATING - Epoch: [0][20/79]	Time 0.049 (0.088)	Data 0.000 (0.006)	Loss 0.2303 (0.2642)	Prec@1 94.531 (93.192)	Prec@5 100.000 (99.740)
+2021-12-06 22:51:11 - INFO - EVALUATING - Epoch: [0][30/79]	Time 0.049 (0.076)	Data 0.000 (0.004)	Loss 0.1320 (0.2654)	Prec@1 96.875 (93.246)	Prec@5 100.000 (99.723)
+2021-12-06 22:51:12 - INFO - EVALUATING - Epoch: [0][40/79]	Time 0.049 (0.069)	Data 0.000 (0.003)	Loss 0.3583 (0.2670)	Prec@1 91.406 (93.293)	Prec@5 99.219 (99.695)
+2021-12-06 22:51:12 - INFO - EVALUATING - Epoch: [0][50/79]	Time 0.050 (0.065)	Data 0.000 (0.002)	Loss 0.2820 (0.2621)	Prec@1 92.188 (93.229)	Prec@5 100.000 (99.740)
+2021-12-06 22:51:13 - INFO - EVALUATING - Epoch: [0][60/79]	Time 0.050 (0.063)	Data 0.000 (0.002)	Loss 0.2933 (0.2612)	Prec@1 92.188 (93.327)	Prec@5 98.438 (99.693)
+2021-12-06 22:51:13 - INFO - EVALUATING - Epoch: [0][70/79]	Time 0.050 (0.061)	Data 0.000 (0.002)	Loss 0.1935 (0.2579)	Prec@1 94.531 (93.420)	Prec@5 100.000 (99.736)

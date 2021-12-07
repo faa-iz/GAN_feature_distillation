@@ -1,0 +1,14 @@
+2021-12-07 21:45:54 - INFO - saving to ./results/2021-12-07_21-45-54
+2021-12-07 21:45:54 - DEBUG - run arguments: Namespace(batch_size=128, dataset='cifar10', epochs=250, evaluate=None, gpus='0', input_size=None, lr=0.1, model='resnet_binary', model_config='', momentum=0.9, optimizer='SGD', print_freq=10, results_dir='./results', resume='', save='2021-12-07_21-45-54', start_epoch=0, type='torch.cuda.FloatTensor', weight_decay=0.0001, workers=8)
+2021-12-07 21:45:54 - INFO - creating model fake generator (student)
+2021-12-07 21:45:54 - INFO - creating model real generator (student)
+2021-12-07 21:45:55 - INFO - number of parameters: 11094154
+2021-12-07 21:45:58 - INFO - TRAINING - Epoch: [0][0/391]	Time 1.894 (1.894)	Data 0.190 (0.190)	Loss 2.4563 (2.4563)	Prec@1 7.031 (7.031)	Prec@5 42.969 (42.969)
+2021-12-07 21:46:01 - INFO - TRAINING - Epoch: [0][10/391]	Time 0.269 (0.403)	Data 0.000 (0.017)	Loss 2.3112 (2.2986)	Prec@1 18.750 (16.051)	Prec@5 64.062 (61.222)
+2021-12-07 21:46:03 - INFO - TRAINING - Epoch: [0][20/391]	Time 0.271 (0.339)	Data 0.000 (0.009)	Loss 2.5290 (2.3652)	Prec@1 16.406 (15.885)	Prec@5 62.500 (62.835)
+2021-12-07 21:46:06 - INFO - TRAINING - Epoch: [0][30/391]	Time 0.271 (0.316)	Data 0.000 (0.006)	Loss 2.4297 (2.4062)	Prec@1 25.781 (16.230)	Prec@5 66.406 (62.954)
+2021-12-07 21:46:09 - INFO - TRAINING - Epoch: [0][40/391]	Time 0.271 (0.305)	Data 0.000 (0.005)	Loss 2.4417 (2.4337)	Prec@1 17.969 (16.235)	Prec@5 63.281 (63.739)
+2021-12-07 21:46:11 - INFO - TRAINING - Epoch: [0][50/391]	Time 0.269 (0.298)	Data 0.000 (0.004)	Loss 2.4662 (2.4412)	Prec@1 21.875 (17.111)	Prec@5 67.969 (65.028)
+2021-12-07 21:46:14 - INFO - TRAINING - Epoch: [0][60/391]	Time 0.270 (0.293)	Data 0.000 (0.003)	Loss 2.5780 (2.4607)	Prec@1 17.188 (17.444)	Prec@5 71.875 (65.663)
+2021-12-07 21:46:17 - INFO - TRAINING - Epoch: [0][70/391]	Time 0.268 (0.290)	Data 0.000 (0.003)	Loss 2.5998 (2.4622)	Prec@1 18.750 (17.705)	Prec@5 67.188 (66.142)
+2021-12-07 21:46:20 - INFO - TRAINING - Epoch: [0][80/391]	Time 0.269 (0.287)	Data 0.000 (0.002)	Loss 2.6554 (2.4690)	Prec@1 17.969 (17.901)	Prec@5 73.438 (66.753)

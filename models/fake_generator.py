@@ -136,18 +136,20 @@ class ResNet(nn.Module):
         x = self.tanh1(x)
         x = self.layer1(x)
         x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+        x1 = self.layer3(x)
 
-        #x = self.avgpool(x)
-        #x = x.view(x.size(0), -1)
-        #x = self.bn2(x)
-        #x = self.tanh2(x)
-        #x = self.fc(x)
-        #x = self.bn3(x)
+        x = self.layer4(x1)
+        #print(x.shape)
+        x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
+        x = self.bn2(x)
+        x = self.tanh2(x)
+        x = self.fc(x)
+        #x = self.bn3(x2)
         #x = self.logsoftmax(x)
+        #print(x.shape)
 
-        return x
+        return x1, x
 
 
 class ResNet_imagenet(ResNet):
@@ -188,19 +190,20 @@ class ResNet_cifar10(ResNet):
         n = int((depth - 2) / 6)
         self.conv1 = BinarizeConv2d(3, 16*self.inflate, kernel_size=3, stride=1, padding=1,
                                bias=False)
-        self.maxpool = lambda x: x
+        self.maxpool = nn.MaxPool2d(kernel_size=5, stride=4, padding=1)#lambda x: x
         self.bn1 = nn.BatchNorm2d(16*self.inflate)
         self.tanh1 = nn.Hardtanh(inplace=True)
         self.tanh2 = nn.Hardtanh(inplace=True)
         self.layer1 = self._make_layer(block, 16*self.inflate, n)
         self.layer2 = self._make_layer(block, 32*self.inflate, n, stride=2)
         self.layer3 = self._make_layer(block, 64*self.inflate, n, stride=2,do_bntan=False)
+        #self.layer4 = self._make_layer(block, 64*self.inflate, n, stride=2,do_bntan=False)
         self.layer4 = lambda x: x
-        self.avgpool = nn.AvgPool2d(8)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.bn2 = nn.BatchNorm1d(64*self.inflate)
-        self.bn3 = nn.BatchNorm1d(10)
-        self.logsoftmax = nn.LogSoftmax()
-        self.fc = BinarizeLinear(64*self.inflate, num_classes)
+        self.bn3 = lambda x: x#nn.BatchNorm1d(10)
+        self.logsoftmax = lambda x: x#nn.LogSoftmax()
+        self.fc = nn.Linear(64*self.inflate, num_classes)
 
         init_model(self)
         #self.regime = {

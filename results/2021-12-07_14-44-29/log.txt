@@ -1,0 +1,13 @@
+2021-12-07 14:44:29 - INFO - saving to ./results/2021-12-07_14-44-29
+2021-12-07 14:44:29 - DEBUG - run arguments: Namespace(batch_size=128, dataset='cifar10', epochs=250, evaluate=None, gpus='0', input_size=None, lr=0.1, model='alexnet', model_config='', momentum=0.9, optimizer='SGD', print_freq=10, results_dir='./results', resume='', save='2021-12-07_14-44-29', start_epoch=0, type='torch.cuda.FloatTensor', weight_decay=0.0001, workers=8)
+2021-12-07 14:44:29 - INFO - creating model fake generator (student)
+2021-12-07 14:44:29 - INFO - creating model real generator (student)
+2021-12-07 14:44:30 - INFO - created model with configuration: {'input_size': None, 'dataset': 'cifar10'}
+2021-12-07 14:44:30 - INFO - number of parameters: 11701662
+2021-12-07 14:44:31 - INFO - training regime: {0: {'optimizer': 'Adam', 'lr': 0.005}, 101: {'lr': 0.001}, 142: {'lr': 0.0005}, 184: {'lr': 0.0001}, 220: {'lr': 1e-05}}
+2021-12-07 14:44:31 - INFO - TRAINING - Epoch: [0][0/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.8091 (2.8091)	Prec@1 10.156 (10.156)	Prec@5 48.438 (48.438)
+2021-12-07 14:44:32 - INFO - TRAINING - Epoch: [0][10/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.7585 (2.6851)	Prec@1 9.375 (9.091)	Prec@5 46.094 (51.136)
+2021-12-07 14:44:33 - INFO - TRAINING - Epoch: [0][20/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.6859 (2.6812)	Prec@1 10.156 (9.561)	Prec@5 49.219 (51.302)
+2021-12-07 14:44:34 - INFO - TRAINING - Epoch: [0][30/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.7941 (2.7027)	Prec@1 7.812 (9.425)	Prec@5 49.219 (50.806)
+2021-12-07 14:44:35 - INFO - TRAINING - Epoch: [0][40/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.6219 (2.7116)	Prec@1 15.625 (9.451)	Prec@5 54.688 (50.343)
+2021-12-07 14:44:36 - INFO - TRAINING - Epoch: [0][50/390]	Time 0.000 (0.000)	Data 0.000 (0.000)	Loss 2.6892 (2.7201)	Prec@1 10.938 (9.375)	Prec@5 55.469 (50.276)
