@@ -225,9 +225,9 @@ def main():
         if os.path.isfile(checkpoint_file):
             logging.info("loading checkpoint '%s'", args.resume)
             checkpoint = torch.load(checkpoint_file)
-            args.start_epoch = 400
-            #best_prec1 = checkpoint['best_prec1']
-            model.load_state_dict(checkpoint)
+            args.start_epoch = 0
+            best_prec1 = checkpoint['best_prec1']
+            model.load_state_dict(checkpoint['state_dict'])
             #logging.info("loaded checkpoint '%s' (epoch %s)",
             #             checkpoint_file, checkpoint['epoch'])
         else:
@@ -290,10 +290,10 @@ def main():
     criterion3.type(args.type)
     model.type(args.type)
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=args.momentum)  # ,weight_decay=args.weight_decay)#, betas=(0.5, 0.999))
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)  # ,weight_decay=args.weight_decay)#, betas=(0.5, 0.999))
     optimizerD = torch.optim.SGD(discriminator.parameters(), lr=0.1, momentum=args.momentum,weight_decay=args.weight_decay)  # , betas=(0.5, 0.999))
-    lr_scheduler1 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs, last_epoch=args.start_epoch - 1, eta_min=0)
-    lr_scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizerD, args.epochs,last_epoch=args.start_epoch - 1, eta_min=0)
+    lr_scheduler1 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs, last_epoch=- 1, eta_min=0)
+    lr_scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizerD, args.epochs,last_epoch=- 1, eta_min=0)
 
     ## real label and fake label ##
     real_label = 1
@@ -390,30 +390,30 @@ def forward(data_loader, model, teacher, discriminator, criterion1, criterion, c
 
         #r_data, rout = teacher(input_var)
         #r_data2, rout2 = teacher(input_var)
-        label = torch.full((input_var.shape[0],), real_label, device=device).type(inputs.type()).cuda()
+        #label = torch.full((input_var.shape[0],), real_label, device=device).type(inputs.type()).cuda()
 
 
 
 
-        r_data, rout = teacher(input_var)
+        #r_data, rout = teacher(input_var)
         #f_data, output = model(input_var)
 
-        kl_loss1 = 0.4*criterion3(F.log_softmax(output, dim=1), F.softmax(rout, dim=1))
-        kl_loss2 = 0.4*criterion3(r_data, f_data)
+        #kl_loss1 = 0.4*criterion3(F.log_softmax(output, dim=1), F.softmax(rout, dim=1))
+        #kl_loss2 = 0.4*criterion3(r_data, f_data)
         #kl_loss.backward()
 
         #'''
 
 
         #f_data, output = model(input_var)
-        loss_real = 0.4*criterion(output, target_var)
+        #loss_real = 0.4*criterion(output, target_var)
 
 
         #print(loss_real.shape)
         #print(kl_loss.shape)
 
 
-        loss = loss_real+kl_loss1#+kl_loss2
+        loss = criterion(output, target_var)
 
         #loss = loss_real
         if type(output) is list:
